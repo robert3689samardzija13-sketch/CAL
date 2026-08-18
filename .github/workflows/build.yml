@@ -1,20 +1,19 @@
 name: Build unsigned iOS app
 
-on:
-  workflow_dispatch:
+on: [workflow_dispatch]
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show Xcode version
+      - name: Check Xcode
         run: xcodebuild -version
 
-      - name: Build archive without signing
+      - name: Build app
         run: |
           xcodebuild \
             -project CustomCalendar.xcodeproj \
@@ -26,16 +25,15 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             archive
 
-      - name: Package unsigned IPA
+      - name: Create IPA
         run: |
           mkdir -p "$RUNNER_TEMP/Payload"
-          cp -R "$RUNNER_TEMP/CustomCalendar.xcarchive/Products/Applications/CustomCalendar.app" "$RUNNER_TEMP/Payload/"
+          cp -R "$RUNNER_TEMP/CustomCalendar.xcarchive/Products/Applications/CustomCalendar.app" "$RUNNER_TEMP/Payload/CustomCalendar.app"
           cd "$RUNNER_TEMP"
-          zip -qry "$GITHUB_WORKSPACE/CustomCalendar-unsigned.ipa" Payload
+          zip -r "$GITHUB_WORKSPACE/CustomCalendar-unsigned.ipa" Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: CustomCalendar-unsigned-ipa
           path: CustomCalendar-unsigned.ipa
-          retention-days: 7
